@@ -14,4 +14,4 @@
 
 `./run.sh`
 
-Running the binary directly won't work, since the included `libglfw` version is not in the `LD_LIBRARY_PATH`
+Running the binary directly won't work (Unless you have a new enough version of `libglfw` installed), since the included `libglfw` is not in the `LD_LIBRARY_PATH`.
