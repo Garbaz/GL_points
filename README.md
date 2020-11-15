@@ -2,9 +2,9 @@
 
 ### Requirements
 
-`libGL`, `libGLEW`
+`libGL` & `libGLEW`.
 
-`libglfw` is included, since I use raw mouse input, which is only available in very recent versions.
+`libglfw` is included with the code, since I use raw mouse input, which is only available in very recent versions.
 
 ### Build
 
