@@ -35,6 +35,8 @@ glm::vec3 camera_direction = glm::vec3(0, 0, 1);
 glm::mat4 view_matrix;
 bool view_matrix_dirty;
 
+glm::ivec2 input_movement = glm::ivec2(0, 0);
+
 void update_view_matrix() {
    view_matrix = glm::lookAt(camera_position, camera_position + camera_direction, glm::vec3(0, 1, 0));
    view_matrix_dirty = true;
@@ -48,7 +50,7 @@ void update_camera_direction(glm::vec3 new_camera_direction) {
    update_view_matrix();
 }
 
-glm::ivec2 input_movement = glm::ivec2(0, 0);
+bool pause_simulation = true;
 
 struct Particle {
    glm::vec3 pos;
@@ -64,13 +66,14 @@ void update_particles(float dt) {
       // glm::vec3 acc = -glm::linearRand(0.1f,0.3f) * p->pos;
       // p->vel += dt * acc;
       p->pos += dt * p->vel;
-      if (glm::abs(p->pos.x) >= 10.0) {
+
+      if (glm::abs(p->pos.x) >= 10.0 && p->pos.x * p->vel.x > 0) {
          p->vel.x = -p->vel.x;
       }
-      if (glm::abs(p->pos.y) >= 10.0) {
+      if (glm::abs(p->pos.y) >= 10.0 && p->pos.y * p->vel.y > 0) {
          p->vel.y = -p->vel.y;
       }
-      if (glm::abs(p->pos.z) >= 10.0) {
+      if (glm::abs(p->pos.z) >= 10.0 && p->pos.z * p->vel.z > 0) {
          p->vel.z = -p->vel.z;
       }
    }
@@ -82,7 +85,9 @@ int main() {
    init_glfw();
    init_glew();
 
-   std::cout << glm::to_string(viewport_size) << std::endl;
+   float range[2];
+   glGetFloatv(GL_ALIASED_POINT_SIZE_RANGE,range);
+   std::cout << range[0] << " -- " << range[1] << std::endl;
 
 #if PRINT_DEBUG
    glEnable(GL_DEBUG_OUTPUT);
@@ -100,7 +105,8 @@ int main() {
 
    for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
       Particle p;
-      p.pos = glm::linearRand(glm::vec3(-1, -1, -1), glm::vec3(1, 1, 1));
+      //p.pos = glm::linearRand(glm::vec3(-1, -1, -1), glm::vec3(1, 1, 1));
+      p.pos = glm::vec3(0);
       p.vel = glm::sphericalRand(10.0);
       p.color = random_saturated_color();
 
@@ -151,6 +157,8 @@ int main() {
 
    while (!glfwWindowShouldClose(window)) {
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+      /* Camera movement */
       if (input_movement.x != 0 || input_movement.y != 0) {
          glm::vec3 dir_right = glm::vec3(camera_direction.z, 0, -camera_direction.x);
          //glm::vec3 dir_forward = glm::vec3(camera_direction.x, 0, camera_direction.z);
@@ -158,7 +166,6 @@ int main() {
          glm::vec3 move = FLY_SPEED * (float(input_movement.x) * dir_right + float(input_movement.y) * dir_forward);
          update_camera_position(camera_position + move);
       }
-
       if (view_matrix_dirty) {
          glUniformMatrix4fv(uniform_view, 1, GL_FALSE, glm::value_ptr(view_matrix));
          view_matrix_dirty = false;
@@ -172,9 +179,13 @@ int main() {
       glUniform1f(uniform_time, time);
       glUniform1f(uniform_deltatime, deltatime);
 
-      update_particles(deltatime);
-      glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(particles), particles);
+      /*Physics simulation step*/
+      if (!pause_simulation) {
+         update_particles(deltatime);
+         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(particles), particles);
+      }
 
+      /*Draw*/
       glDrawArrays(GL_POINTS, 0, NUMBER_OF_PARTICLES);
 
       glfwSwapBuffers(window);
@@ -188,8 +199,7 @@ int main() {
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
       exit(0);
-   }
-   if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+   } else if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
       if (mouse_captured) {
          glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
          mouse_captured = false;
@@ -197,6 +207,8 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
          glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
          mouse_captured = true;
       }
+   } else if (key == GLFW_KEY_ENTER && action == GLFW_PRESS){
+      pause_simulation = !pause_simulation;
    } else if (key == GLFW_KEY_W) {
       if (action == GLFW_PRESS) {
          input_movement.y++;
@@ -256,8 +268,8 @@ void init_glfw() {
    glfwWindowHint(GLFW_GREEN_BITS, vidmode->greenBits);
    glfwWindowHint(GLFW_BLUE_BITS, vidmode->blueBits);
    glfwWindowHint(GLFW_REFRESH_RATE, vidmode->refreshRate);
-   //window = glfwCreateWindow(vidmode->width, vidmode->height, "RaytraceGL", monitor, NULL);
-   window = glfwCreateWindow(1200, 675, "GL Points", NULL, NULL);
+   window = glfwCreateWindow(vidmode->width, vidmode->height, "RaytraceGL", monitor, NULL);
+   //window = glfwCreateWindow(1200, 675, "GL Points", NULL, NULL);
 
    glfwGetFramebufferSize(window, &viewport_size.x, &viewport_size.y);
 
