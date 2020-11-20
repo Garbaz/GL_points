@@ -1,5 +1,7 @@
 # GL Points
 
+Efficient particle rendering in OpenGL using GL_POINTS
+
 ### Requirements
 
 `libGL` & `libGLEW`.

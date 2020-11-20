@@ -30,7 +30,7 @@ glm::vec2 prev_cursor_pos = glm::vec2(0, 0);
 
 double camera_angle_vertical = 0;
 double camera_angle_horizontal = 0;
-glm::vec3 camera_position = glm::vec3(0, 0, 0);
+glm::vec3 camera_position = glm::vec3(0, 0, -1);
 glm::vec3 camera_direction = glm::vec3(0, 0, 1);
 glm::mat4 view_matrix;
 bool view_matrix_dirty;

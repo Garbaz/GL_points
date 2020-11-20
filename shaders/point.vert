@@ -1,5 +1,7 @@
 #version 330
 
+const float POINT_RADIUS = 16.0;
+
 uniform mat4 view;
 uniform mat4 proj;
 
@@ -13,6 +15,6 @@ void main() {
 
   vec4 pos = proj * view * vec4(position, 1.0);
 
-  gl_PointSize = 50.0 / pos.z;
+  gl_PointSize = POINT_RADIUS / pos.w;
   gl_Position = pos;
 }
